@@ -1,0 +1,81 @@
+#include <Wire.h>
+#include <MPU6050_tockn.h>
+
+// Defina os pinos I2C
+#define I2C_SDA 21
+#define I2C_SCL 22
+
+MPU6050 mpu6050(Wire);
+
+void setup() {
+  Serial.begin(115200);  // Inicializa a comunicação serial com taxa de 115200 bps
+
+  // Inicializa o barramento I2C com os pinos SDA e SCL definidos
+  Wire.begin(I2C_SDA, I2C_SCL);
+
+  // Verifica a comunicação I2C
+  Serial.println("Scanning I2C bus...");
+  byte deviceCount = 0;
+  for (byte address = 1; address < 120; ++address) {
+    Wire.beginTransmission(address);
+    if (Wire.endTransmission() == 0) {
+      Serial.print("I2C device found at address 0x");
+      if (address < 16) {
+        Serial.print("0");
+      }
+      Serial.println(address, HEX);
+      ++deviceCount;
+      delay(10);  // Pequena pausa para estabilização
+    }
+  }
+  Serial.print("Found ");
+  Serial.print(deviceCount);
+  Serial.println(" I2C devices.");
+
+  // Configurações iniciais do sensor MPU6050
+  if (deviceCount > 0) {
+    mpu6050.begin();                // Inicializa o MPU6050
+    mpu6050.calcGyroOffsets(true);  // Calcula os offsets do giroscópio
+    Serial.println("MPU6050 initialized.");
+  } else {
+    Serial.println("No I2C devices found. Please check connections.");
+  }
+}
+
+void loop() {
+  // Atualiza os dados do sensor
+  mpu6050.update();
+
+  // Verifica se um segundo e meio se passou para enviar os dados
+  static unsigned long lastPrintTime = 0;
+  if (millis() - lastPrintTime > 1500) {
+    Serial.println("--");
+
+    // Imprime a temperatura
+    Serial.print(mpu6050.getTemp());
+    Serial.println();  // Pula para a próxima linha
+
+    // Imprime as leituras de aceleração
+    Serial.print(mpu6050.getAccX());
+    Serial.print("\t");
+    Serial.print(mpu6050.getAccY());
+    Serial.print("\t");
+    Serial.println(mpu6050.getAccZ());
+
+    // Imprime as leituras dos ângulos de aceleração
+    Serial.print(mpu6050.getAccAngleX());
+    Serial.print("\t");
+    Serial.println(mpu6050.getAccAngleY());
+
+    // Imprime as leituras do giroscópio
+    Serial.print(mpu6050.getGyroAngleX());
+    Serial.print("\t");
+    Serial.print(mpu6050.getGyroAngleY());
+    Serial.print("\t");
+    Serial.println(mpu6050.getGyroAngleZ());
+
+    Serial.println("--");
+
+    lastPrintTime = millis();  // Atualiza o temporizador
+  }
+}
