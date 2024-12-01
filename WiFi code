@@ -1,0 +1,62 @@
+#include <Wire.h>
+#include <MPU6050_tockn.h>
+#include <WiFiManager.h> // https://github.com/tzapu/WiFiManager
+
+MPU6050 mpu6050(Wire);
+
+long timer = 0;
+
+void setup() {
+    // Inicia a comunicação serial
+    Serial.begin(115200);
+
+    // Inicia o Wi-Fi Manager
+    WiFiManager wm;
+
+    // Tenta se conectar automaticamente usando credenciais salvas
+    bool res = wm.autoConnect("WIFI", "password"); // AP protegido por senha
+
+    if (!res) {
+        Serial.println("Failed to connect");
+        // ESP.restart(); // Reinicia o ESP caso a conexão falhe
+    } else {
+        Serial.println("Connected...yeey :)");
+    }
+
+    // Configurações iniciais do sensor MPU6050
+    Wire.begin();
+    mpu6050.begin();
+    mpu6050.calcGyroOffsets(true);
+}
+
+void loop() {
+    // Atualiza os dados do sensor
+    mpu6050.update();
+
+    // Verifica se um segundo passou para enviar os dados
+    if (millis() - timer > 1000) {
+        Serial.println("------------------------------------------------------");
+        Serial.print("temp : "); Serial.println(mpu6050.getTemp());
+        Serial.print("Ac.X : "); Serial.print(mpu6050.getAccX());
+        Serial.print("\tAc.Y : "); Serial.print(mpu6050.getAccY());
+        Serial.print("\tAc.Z : "); Serial.println(mpu6050.getAccZ());
+
+        Serial.print("gyroX : "); Serial.print(mpu6050.getGyroX());
+        Serial.print("\tgyroY : "); Serial.print(mpu6050.getGyroY());
+        Serial.print("\tgyroZ : "); Serial.println(mpu6050.getGyroZ());
+
+        Serial.print("Ac.AngX : "); Serial.print(mpu6050.getAccAngleX());
+        Serial.print("\tAc.AngY : "); Serial.println(mpu6050.getAccAngleY());
+
+        Serial.print("gyroAng.X : "); Serial.print(mpu6050.getGyroAngleX());
+        Serial.print("\tgyroAng.Y : "); Serial.print(mpu6050.getGyroAngleY());
+        Serial.print("\tgyroAng.Z : "); Serial.println(mpu6050.getGyroAngleZ());
+
+        Serial.print("Ang.X : "); Serial.print(mpu6050.getAngleX());
+        Serial.print("\tAng.Y : "); Serial.print(mpu6050.getAngleY());
+        Serial.print("\tAng.Z : "); Serial.println(mpu6050.getAngleZ());
+        Serial.println("------------------------------------------------------");
+
+        timer = millis(); // Atualiza o temporizador
+    }
+}
